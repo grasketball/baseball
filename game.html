@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .quiz-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #F44336;
+            margin-bottom: 20px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: blue;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+
+    /* ... (your existing styles) ... */
+
+    .option {
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 5px; /* Add some margin between buttons */
+        transition: background-color 0.3s ease;
+    }
+
+    .option:hover {
+        background-color: #45a049;
+    }
+
+    .option:disabled {
+        background-color: #ddd;
+        color: #2196F3;
+        cursor: not-allowed;
+    }
+
+
+        .stats-panel {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #stats-label {
+            color: black;
+        }
+
+        #timer-label {
+            font-weight: bold;
+        }
+
+        #submit-button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #submit-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Baseball Trivia</h1>
+    <div class="question" id="question-label"></div>
+    <div id="options-container" class="options"></div>
+    <div class="stats-panel">
+        <span id="timer-label">Time: 30</span>
+        <span id="stats-label">Score: 0 Right: 0 Wrong: 0 Expired: 0 Time Spent: 0 sec.</span>
+        <button id="submit-button">Submit</button>
+    </div>
+</div>
+
+<script>
+    let currentQuestionIndex = 0;
+    let remainingTime = 30;
+    let score = 0;
+    let questionsCorrect = 0;
+    let questionsMissed = 0;
+    let questionsTimedOut = 0;
+    let totalTimePlayed = 0;
+    let selectedOption = null; // Variable to track the selected option
+    let submitButtonPressed = false;
+
+    // Your HTML elements
+    const questionLabel = document.getElementById('question-label');
+    const optionsContainer = document.getElementById('options-container');
+    const timerLabel = document.getElementById('timer-label');
+    const statsLabel = document.getElementById('stats-label');
+    const submitButton = document.getElementById('submit-button');
+               const questions = [
+     	"Who won the AL MVP in 1976?,George Brett,George Foster,Joe Morgan,Thurman Munson,Thurman Munson",
+"Who won the 1987 AL CY Young Award?,Jimmy Key,Rick Sutcliffe,Roger Clemens,Steve Bedrosian,Roger Clemens",
+"Who won the 1990 NL CY Young Award?,Bob Welch,Doug Drabek,Ramon Martinez,Roger Clemens,Doug Drabek",
+"Who won the WS in 2013?,Red Sox,Tigers,Dodgers,Cardinals,Red Sox",
+"Who won the WS in 1914?,Braves,Red Sox,Athletics,Giants,Red Sox",
+"Who won the WS in 1964?,White Sox,Reds,Yankees,Cardinals,Cardinals",
+"Who won the WS in 1971?,Orioles,Athletics,Pirates,Giants,Pirates",
+"Who won the WS in 1968?,Orioles,Tigers,Giants,Cardinals,Tigers",
+"Who won the NL MVP in 1960?,Dick Groat,Don Hoak,Mickey Mantle,Roger Maris,Dick Groat",
+"Who won the 2015 AL CY Young Award?,Dallas Keuchel,David Price,Jake Arrieta,Zack Greinke,Dallas Keuchel",
+"Who won the WS in 1933?,Giants,Yankees,Pirates,Nationals,Yankees",
+"Who won the AL MVP in 2023?,Corey Seager,Mookie Betts,Ronald Acuna Jr.,Shohei Ohtani,Shohei Ohtani",
+"Who won the NL MVP in 1940?,Bob Feller,Frank McCormick,Hank Greenberg,Johnny Mize,Frank McCormick",
+"Who won the WS in 2007?,DIamondbacks,Red Sox,Indians,Rockies,Red Sox",
+"Who won the AL MVP in 1961?,Frank Robinson,Mickey Mantle,Orlando Cepeda,Roger Maris,Roger Maris",
+"Who won the 1969 AL CY Young Award(s)?,Denny McLain and Mike Cuellar,Denny McClain and Tom Seaver,Mike Cuellar and Tom Seaver,Tom Seaver,Tom Seaver",
+"Who won the AL MVP in 1979?,Don Baylor,Keith Hernandez,Ken Singleton,Willie Stargell,Don Baylor",
+"Who won the 1983 NL CY Young Award?,Dan Quisenberry,John Denny,LaMarr Hoyt,Mario Soto,John Denny",
+"Who won the AL MVP in 1995?,Albert Belle,Barry Larkin,Dante Bichette,Mo Vaughn,Mo Vaughn",
+"Who won the WS in 2011?,Tigers,Brewers,Cardinals,Rangers,Cardinals",
+"Who won the AL MVP in 1941?,Dolph Camilli,Joe DiMaggio,Pete Reiser,Ted Williams,Joe DiMaggio",
+"Who won the WS in 1947?,Dodgers,Tigers,Yankees,Cardinals,Yankees",
+"Who won the WS in 1907?,Cubs,Tigers,Athletics,Pirates,Cubs",
+"Who won the WS in 1942?,Red Sox,Dodgers,Yankees,Cardinals,Cardinals",
+"Who won the WS in 1972?,Reds,Tigers,Athletics,Pirates,Athletics",
+"Who won the NL MVP in 1981?,Andre Dawson,Mike Schmidt,Rickey Henderson,Rollie Fingers,Mike Schmidt",
+"Who won the 2016 NL CY Young Award?,Jon Lester,Justin Verlander,Max Scherzer,Rick Porcello,Max Scherzer",
+"Who won the 1975 NL CY Young Award?,Catfish Hunter,Jim Palmer,Randy Jones,Tom Seaver,Tom Seaver",
+"Who won the WS in 1920?,Robins,White Sox,Indians,Giants,Indians",
+"Who won the 2021 AL CY Young Award?,Corbin Burnes,Gerrit Cole,Robbie Ray,Zach Wheeler,Robbie Ray",
+"Who won the 1974 AL CY Young Award?,Andy Messersmith,Catfish Hunter,Fergie Jenkins,Mike Marshall,Catfish Hunter",
+"Who won the AL MVP in 2000?,Barry Bonds,Frank Thomas,Jason Giambi,Jeff Kent,Jason Giambi",
+"Who won the NL MVP in 1980?,Gary Carter,George Brett,Mike Schmidt,Reggie Jackson,Mike Schmidt",
+"Who won the AL MVP in 1948?,Joe DiMaggio,Johnny Sain,Lou Boudreau,Stan Musial,Lou Boudreau",
+"Who won the WS in 1958?,White Sox,Braves,Yankees,Pirates,Yankees",
+"Who won the 1979 AL CY Young Award?,Bruce Sutter,Joe Niekro,Mike Flanagan,Tommy John,Mike Flanagan",
+"Who won the NL MVP in 1938?,Bill Dickey,Bill Lee,Ernie Lombardi,Jimmie Foxx,Ernie Lombardi",
+"Who won the NL MVP in 1956?,Don Newcombe,Mickey Mantle,Sal Maglie,Yogi Berra,Don Newcombe",
+"Who won the WS in 1937?,Cubs,Tigers,Giants,Yankees,Yankees",
+"Who won the WS in 2017?,Cubs,Astros,Dodgers,Yankees,Astros",
+"Who won the NL MVP in 1941?,Dolph Camilli,Joe DiMaggio,Pete Reiser,Ted Williams,Dolph Camilli",
+"Who won the 2004 AL CY Young Award?,Curt Schilling,Johan Santana,Randy Johnson,Roger Clemens,Johan Santana",
+"Who won the 2022 NL CY Young Award?,Dylan Cease,Justin Verlander,Max Fried,Sandy Alcántara,Sandy Alcántara",
+"Who won the 2004 NL CY Young Award?,Curt Schilling,Johan Santana,Randy Johnson,Roger Clemens,Roger Clemens",
+"Who won the AL MVP in 1963?,Al Kaline,Dick Groat,Elston Howard,Sandy Koufax,Elston Howard",
+"Who won the WS in 2000?,Mets,Yankees,Mariners,Cardinals,Yankees",
+"Who won the NL MVP in 2012?,Buster Posey,Miguel Cabrera,Mike Trout,Ryan Braun,Buster Posey",
+"Who won the WS in 1975?,Red Sox,Reds,Athletics,Pirates,Reds",
+"Who won the WS in 1932?,Cubs,Yankees,Athletics,Pirates,Yankees",
+"Who won the NL MVP in 1943?,Luke Appling,Spud Chandler,Stan Musial,Walker Cooper,Stan Musial",
+"Who won the WS in 1934?,Tigers,Giants,Yankees,Cardinals,Cardinals",
+"Who won the NL MVP in 1997?,Ken Griffey Jr.,Larry Walker,Mike Piazza,Tino Martinez,Larry Walker",
+"Who won the 2018 NL CY Young Award?,Blake Snell,Jacob deGrom,Justin Verlander,Max Scherzer,Jacob deGrom",
+"Who won the AL MVP in 1942?,Enos Slaughter,Joe Gordon,Mort Cooper,Ted Williams,Joe Gordon",
+"Who won the 1968 NL CY Young Award?,Bob Gibson,Dave McNally,Denny McLain,Juan Marichal,Bob Gibson",
+"Who won the NL MVP in 1982?,Dale Murphy,Eddie Murray,Lonnie Smith,Robin Yount,Dale Murphy",
+"Who won the NL MVP in 1949?,Jackie Robinson,Phil Rizzuto,Stan Musial,Ted Williams,Jackie Robinson",
+"Who won the 1995 NL CY Young Award?,Greg Maddux,Jose Mesa,Pete Schourek,Randy Johnson,Greg Maddux",
+"Who won the AL MVP in 1950?,Billy Goodman,Jim Konstanty,Phil Rizzuto,Stan Musial,Phil Rizzuto",
+"Who won the AL MVP in 1975?,Fred Lynn,Greg Luzinski,Joe Morgan,John Mayberry,Fred Lynn",
+"Who won the AL MVP in 1986?,Don Mattingly,Glenn Davis,Mike Schmidt,Roger Clemens,Roger Clemens",
+"Who won the AL MVP in 1937?,Charlie Gehringer,Gabby Hartnett,Joe DiMaggio,Joe Medwick,Charlie Gehringer",
+"Who won the WS in 1909?,Cubs,Tigers,Athletics,Pirates,Pirates",
+"Who won the AL MVP in 1987?,Alan Trammell,Andre Dawson,George Bell,Ozzie Smith,George Bell",
+"Who won the WS in 1918?,Red Sox,Cubs,Indians,Giants,Red Sox",
+"Who won the AL MVP in 2012?,Buster Posey,Miguel Cabrera,Mike Trout,Ryan Braun,Miguel Cabrera",
+"Who won the 2018 AL CY Young Award?,Blake Snell,Jacob deGrom,Justin Verlander,Max Scherzer,Blake Snell",
+"Who won the NL MVP in 1936?,Carl Hubbell,Dizzy Dean,Lou Gehrig,Luke Appling,Carl Hubbell",
+"Who won the AL MVP in 1982?,Dale Murphy,Eddie Murray,Lonnie Smith,Robin Yount,Robin Yount",
+"Who won the 1978 NL CY Young Award?,Burt Hooton,Gaylord Perry,Mike Caldwell,Ron Guidry,Gaylord Perry",
+"Who won the 2008 AL CY Young Award?,Brandon Webb,Cliff Lee,Roy Halladay,Tim Lincecum,Cliff Lee",
+"Who won the NL MVP in 2003?,Albert Pujols,Alex Rodriguez,Barry Bonds,Carlos Delgado,Barry Bonds",
+"Who won the NL MVP in 1992?,Barry Bonds,Dennis Eckersley,Kirby Puckett,Terry Pendleton,Barry Bonds",
+"Who won the 2013 NL CY Young Award?,Adam Wainwright,Clayton Kershaw,Max Scherzer,Yu Darvish,Clayton Kershaw",
+"Who won the 1999 AL CY Young Award?,Pedro Martinez,Mike Hampton,Mike Musssina,Randy Johnson,Pedro Martinez",
+"Who won the 1985 NL CY Young Award?,Bret Saberhagen,Dwight Gooden,John Tudor,Ron Guidry,Dwight Gooden",
+"Who won the NL MVP in 1933?,Carl Hubbell,Chuck Klein,Jimmie Foxx,Joe Cronin,Carl Hubbell",
+"Who won the WS in 1965?,White Sox,Dodgers,Twins,Giants,Dodgers",
+"Who won the WS in 2012?,Tigers,Yankees,Giants,Cardinals,Giants",
+"Who won the 1994 NL CY Young Award?,David Cone,Greg Maddux,Jimmy Key,Ken Hill,Greg Maddux",
+"Who won the AL MVP in 2019?,Alex Bregman,Christian Yelich,Cody Bellinger,Mike Trout,Mike Trout",
+"Who won the 2011 AL CY Young Award?,Clayton Kershaw,Jered Weaver,Justin Verlander,Roy Halladay,Justin Verlander",
+"Who won the 2006 NL CY Young Award?,Brandon Webb,Chien-Ming Wang,Johan Santana,Trevor Hoffman,Brandon Webb",
+"Who won the AL MVP in 2005?,Albert Pujols,Alex Rodriguez,Andruw Jones,David Ortiz,Alex Rodriguez",
+"Who won the NL MVP in 1988?,Darryl Strawberry,José Canseco,Kirk Gibson,Mike Greenwell,Kirk Gibson",
+"Who won the WS in 1986?,Red Sox,Angels,Astros,Mets,Mets",
+"Who won the NL MVP in 1953?,Al Rosen,Eddie Matthews,Roy Campanella,Yogi Berra,Roy Campanella",
+"Who won the AL MVP in 2017?,Aaron Judge,Giancarlo Stanton,Joey Votto,José Altuve,José Altuve",
+"Who won the NL MVP in 1958?,Bob Turley,Ernie Banks,Jackie Jensen,Willie Mays,Ernie Banks",
+"Who won the WS in 1903?,Americans,Giants,Athletics,Pirates,Americans",
+"Who won the AL MVP in 1999?,Chipper Jones,Ivan Rodriguez,Jeff Bagwell,Pedro Martinez,Ivan Rodriguez",
+"Who won the AL MVP in 1971?,Joe Torre,Sal Bando,Vida Blue,Willie Stargell,Vida Blue",
+"Who won the WS in 1922?,Reds,Giants,Yankees,Browns,Yankees",
+"Who won the WS in 2004?,Red Sox,Astros,Yankees,Cardinals,Red Sox",
+"Who won the 2006 AL CY Young Award?,Brandon Webb,Chien-Ming Wang,Johan Santana,Trevor Hoffman,Johan Santana",
+"Who won the NL MVP in 1963?,Al Kaline,Dick Groat,Elston Howard,Sandy Koufax,Sandy Koufax",
+"Who won the 1991 AL CY Young Award?,Lee Smith,Scott Erickson,Roger Clemens,Tom Glavine,Roger Clemens",
+"Who won the NL MVP in 2005?,Albert Pujols,Alex Rodriguez,Andruw Jones,David Ortiz,Albert Pujols",
+"Who won the WS in 1953?,Dodgers,Indians,Yankees,Braves,Yankees",
+"Who won the WS in 1939?,Red Sox,Reds,Yankees,Cardinals,Yankees",
+"Who won the 1998 AL CY Young Award?,Pedro Martinez,Roger Clemens,Tom Glavine,Trevor Hoffman,Roger Clemens",
+"Who won the AL MVP in 1970?,Billy Williams,Boog Powell,Johnny Bench,Tony Oliva,Boog Powell",
+"Who won the 1993 NL CY Young Award?,Bill Swift,Greg Maddux,Jack McDowell,Randy Johnson,Greg Maddux",
+"Who won the AL MVP in 1955?,Al Kaline,Duke Snider,Roy Campanella,Yogi Berra,Yogi Berra",
+"Who won the NL MVP in 1986?,Don Mattingly,Glenn Davis,Mike Schmidt,Roger Clemens,Mike Schmidt",
+"Who won the AL MVP in 1958?,Bob Turley,Ernie Banks,Jackie Jensen,Willie Mays,Jackie Jensen",
+"Who won the WS in 1987?,Tigers,Twins,Giants,Cardinals,Twins",
+"Who won the NL MVP in 1965?,Sandy Koufax,Tony Oliva,Willie Mays,Zoilo Versalles,Willie Mays",
+"Who won the NL MVP in 1932?,Chuck Klein,Jimmie Foxx,Lou Gehrig,Lon Warneke,Chuck Klein",
+"Who won the NL MVP in 1995?,Albert Belle,Barry Larkin,Dante Bichette,Mo Vaughn,Barry Larkin",
+"Who won the AL MVP in 2014?,Clayton Kershaw,Giancarlo Stanton,Mike Trout,Victor Martinez,Mike Trout",
+"Who won the AL MVP in 2018?,Christian Yelich,Javier Báez,Mike Trout,Mookie Betts,Mookie Betts",
+"Who won the 1998 NL CY Young Award?,Pedro Martinez,Roger Clemens,Tom Glavine,Trevor Hoffman,Tom Glavine",
+"Who won the 1968 AL CY Young Award?,Bob Gibson,Dave McNally,Denny McLain,Juan Marichal,Denny McLain",
+"Who won the WS in 1929?,Cubs,Yankees,Athletics,Pirates,Athletics",
+"Who won the WS in 1988?,Red Sox,Dodgers,Mets,Athletics,Dodgers",
+"Who won the NL MVP in 2008?,Albert Pujols,Dustin Pedroia,Justin Morneau,Ryan Howard,Albert Pujols",
+"Who won the AL MVP in 1972?,Billy Williams,Dick Allen,Joe Rudi,Johnny Bench,Dick Allen",
+"Who won the AL MVP in 1985?,Don Mattingly,Dave Parker,George Brett,Willie McGee,Don Mattingly",
+"Who won the 2017 AL CY Young Award?,Chris Sale,Clayton Kershaw,Corey Kluber,Max Scherzer,Corey Kluber",
+"Who won the AL MVP in 1978?,Dave Parker,Jim Rice,Ron Guidry,Steve Garvey,Jim Rice",
+"Who won the WS in 1921?,Indians,Giants,Yankees,Pirates,Yankees",
+"Who won the 2003 AL CY Young Award?,Éric Gagné,Esteban Loaiza,Jason Schmidt,Roy Halladay,Roy Halladay",
+"Who won the WS in 1979?,Orioles,Angels,Reds,Pirates,Pirates",
+"Who won the AL MVP in 1951?,Ned Garver,Roy Campanella,Stan Musial,Yogi Berra,Yogi Berra",
+"Who won the NL MVP in 1990?,Barry Bonds,Bobby Bonilla,Cecil Fielder,Rickey Henderson,Barry Bonds",
+"Who won the AL MVP in 1933?,Carl Hubbell,Chuck Klein,Jimmie Foxx,Joe Cronin,Jimmie Foxx",
+"Who won the NL MVP(s) in 1979?,Dave Winfield,Dave Winfield and Willie Stargell,Dave Winfield and Keith Hernandez,Keith Hernandez and Willie Stargell,Keith Hernandez and Willie Stargell",
+"Who won the NL MVP in 1998?,Juan González,Mark McGwire,Nomar Garciaparra,Sammy Sosa,Sammy Sosa",
+"Who won the WS in 1951?,Dodgers,Indians,Giants,Yankees,Yankees",
+"Who won the WS in 1999?,Braves,Red Sox,Mets,Yankees,Yankees",
+"Who won the WS in 1952?,Dodgers,Indians,Giants,Yankees,Yankees",
+"Who won the 2014 AL CY Young Award?,Clayton Kershaw,Corey Kluber,Félix Hernández,Johnny Cueto,Corey Kluber",
+"Who won the AL MVP in 1989?,Kevin Mitchell,Robin Yount,Ruben Sierra,Will Clark,Robin Yount",
+"Who won the AL MVP in 2008?,Albert Pujols,Dustin Pedroia,Justin Morneau,Ryan Howard,Dustin Pedroia",
+"Who won the 2010 NL CY Young Award?,Adam Wainwright,David Price,Félix Hernández,Roy Halladay,Roy Halladay",
+"Who won the 1987 NL CY Young Award?,Jimmy Key,Rick Sutcliffe,Roger Clemens,Steve Bedrosian,Steve Bedrosian",
+"Who won the NL MVP in 2019?,Alex Bregman,Christian Yelich,Cody Bellinger,Mike Trout,Cody Bellinger",
+"Who won the NL MVP in 1996?,Alex Rodriguez,Juan González,Ken Caminiti,Mike Piazza,Ken Caminiti",
+"Who won the WS in 1985?,Royals,Dodgers,Cardinals,Blue Jays,Royals",
+"Who won the WS in 2003?,Red Sox,Cubs,Marlins,Yankees,Marlins",
+"Who won the 2007 NL CY Young Award?,Brandon Webb,CC Sabathia,Jake Peavy,Josh Beckett,Jake Peavy",
+"Who won the 1988 NL CY Young Award?,Danny Jackson,Dennis Eckersley,Frank Viola,Orel Hershiser,Orel Hershiser",
+"Who won the 1994 AL CY Young Award?,David Cone,Greg Maddux,Jimmy Key,Ken Hill,David Cone",
+"Who won the NL MVP in 1991?,Barry Bonds,Cal Ripken Jr.,Cecil Fielder,Terry Pendleton,Terry Pendleton",
+"Who won the 2000 AL CY Young Award?,Pedro Martinez,Randy Johnson,Tim Hudson,Tom Glavine,Pedro Martinez",
+"Who won the 1996 AL CY Young Award?,Andy Pettitte,John Smoltz,Kevin Brown,Pat Hentgen,Pat Hentgen",
+"Who won the WS in 1991?,Braves,Twins,Pirates,Blue Jays,Twins",
+"Who won the 2020 NL CY Young Award?,Kenta Maeda,Shane Bieber,Trevor Bauer,Yu Darvish,Trevor Bauer",
+"Who won the 1982 AL CY Young Award?,Jim Palmer,Pete Vuckovich,Steve Carlton,Steve Rogers,Pete Vuckovich",
+"Who won the WS in 1950?,Dodgers,Tigers,Yankees,Phillies,Yankees",
+"Who won the 1992 NL CY Young Award?,Dennis Eckersley,Greg Maddux,Jack McDowell,Tom Glavine,Greg Maddux",
+"Who won the AL MVP in 1977?,Al Cowens,George Foster,Greg Luzinski,Rod Carew,Rod Carew",
+"Who won the NL MVP in 1966?,Brooks Robinson,Frank Robinson,Roberto Clemente,Sandy Koufax,Roberto Clemente",
+"Who won the WS in 2009?,Angels,Dodgers,Yankees,Phillies,Yankees",
+"Who won the WS in 1912?,Red Sox,Giants,Pirates,Nationals,Red Sox",
+"Who won the NL MVP in 2017?,Aaron Judge,Giancarlo Stanton,Joey Votto,José Altuve,Giancarlo Stanton",
+"Who won the WS in 1924?,Giants,Yankees,Pirates,Nationals,Nationals",
+"Who won the 1970 NL CY Young Award?,Bob Gibson,Dave McNally,Gaylord Perry,Jim Perry,Bob Gibson",
+"Who won the WS in 1960?,Orioles,Braves,Yankees,Pirates,Pirates",
+"Who won the 2011 NL CY Young Award?,Clayton Kershaw,Jered Weaver,Justin Verlander,Roy Halladay,Clayton Kershaw",
+"Who won the WS in 1977?,Royals,Dodgers,Yankees,Phillies,Yankees",
+"Who won the AL MVP in 1981?,Andre Dawson,Mike Schmidt,Rickey Henderson,Rollie Fingers,Rollie Fingers",
+"Who won the NL MVP in 1976?,George Brett,George Foster,Joe Morgan,Thurman Munson,Joe Morgan",
+"Who won the WS in 1926?,Reds,Indians,Yankees,Cardinals,Cardinals",
+"Who won the WS in 1995?,Braves,Reds,Indians,Mariners,Braves",
+"Who won the 2021 NL CY Young Award?,Corbin Burnes,Gerrit Cole,Robbie Ray,Zach Wheeler,Corbin Burnes",
+"Who won the AL MVP in 1973?,Jim Palmer,Pete Rose,Reggie Jackson,Willie Stargell,Reggie Jackson",
+"Who won the 1986 NL CY Young Award?,Fernando Valenzuela,Mike Scott,Roger Clemens,Teddy Higuera,Mike Scott",
+"Who won the WS in 1962?,Dodgers,Twins,Yankees,Giants,Yankees",
+"Who won the 1993 AL CY Young Award?,Bill Swift,Greg Maddux,Jack McDowell,Randy Johnson,Jack McDowell",
+"Who won the 1975 AL CY Young Award?,Catfish Hunter,Jim Palmer,Randy Jones,Tom Seaver,Jim Palmer",
+"Who won the NL MVP in 2009?,Albert Pujols,Hanley Ramirez,Joe Mauer,Mark Teixeira,Albert Pujols",
+"Who won the AL MVP in 1946?,Dixie Walker,Hal Newhouser,Stan Musial,Ted Williams,Ted Williams",
+"Who won the WS in 1931?,Giants,Yankees,Athletics,Cardinals,Cardinals",
+"Who won the WS in 1941?,Red Sox,Dodgers,Yankees,Cardinals,Yankees",
+"Who won the AL MVP in 1938?,Bill Dickey,Bill Lee,Ernie Lombardi,Jimmie Foxx,Jimmie Foxx",
+"Who won the WS in 2006?,Tigers,Mets,Athletics,Cardinals,Cardinals",
+"Who won the 1972 AL CY Young Award?,Gaylord Perry,Steve Blass,Steve Carlton,Wilbur Wood,Gaylord Perry",
+"Who won the NL MVP in 1983?,Andre Dawson,Cal Ripken Jr.,Dale Murphy,Eddie Murray,Dale Murphy",
+"Who won the NL MVP in 1973?,Jim Palmer,Pete Rose,Reggie Jackson,Willie Stargell,Pete Rose",
+"Who won the AL MVP in 1949?,Jackie Robinson,Phil Rizzuto,Stan Musial,Ted Williams,Ted Williams",
+"Who won the AL MVP in 2016?,Daniel Murphy,Kris Bryant,Mike Trout,Mookie Betts,Mike Trout",
+"Who won the 2001 NL CY Young Award?,Curt Schilling,Mark Mulder,Randy Johnson,Roger Clemens,Randy Johnson",
+"Who won the 2003 NL CY Young Award?,Éric Gagné,Esteban Loaiza,Jason Schmidt,Roy Halladay,Éric Gagné",
+"Who won the NL MVP in 1978?,Dave Parker,Jim Rice,Ron Guidry,Steve Garvey,Dave Parker",
+"Who won the 1999 NL CY Young Award?,Pedro Martinez,Mike Hampton,Mike Musssina,Randy Johnson,Randy Johnson",
+"Who won the 1990 AL CY Young Award?,Bob Welch,Doug Drabek,Ramon Martinez,Roger Clemens,Bob Welch",
+"Who won the NL MVP in 1987?,Alan Trammell,Andre Dawson,George Bell,Ozzie Smith,Andre Dawson",
+"Who won the AL MVP in 1991?,Barry Bonds,Cal Ripken Jr.,Cecil Fielder,Terry Pendleton,Cal Ripken Jr.",
+"Who won the WS in 1970?,Orioles,Reds,Twins,Pirates,Orioles",
+"Who won the NL MVP in 1935?,Dizzy Dean,Gabby Hartnett,Hank Greenberg,Wes Ferrell,Gabby Hartnett",
+"Who won the WS in 1911?,Cubs,Tigers,Giants,Athletics,Athletics",
+"Who won the NL MVP in 1955?,Al Kaline,Duke Snider,Roy Campanella,Yogi Berra,Roy Campanella",
+"Who won the WS in 1936?,Cubs,Giants,Yankees,Cardinals,Yankees",
+"Who won the AL MVP in 1993?,Barry Bonds,Frank Thomas,Lenny Dykstra,Paul Molitor,Frank Thomas",
+"Who won the NL MVP in 1969?,Boog Powell,Harmon Killebrew,Tom Seaver,Willie McCovey,Willie McCovey",
+"Who won the 1972 NL CY Young Award?,Gaylord Perry,Steve Blass,Steve Carlton,Wilbur Wood,Steve Carlton",
+"Who won the NL MVP in 1957?,Henry Aaron,Mickey Mantle,Stan Musial,Ted Williams,Henry Aaron",
+"Who won the NL MVP in 2021?,Bryce Harper,Juan Soto,Shohei Ohtani,Vladimir Guerrero Jr.,Bryce Harper",
+"Who won the WS in 1956?,Dodgers,Indians,Yankees,Braves,Yankees",
+"Who won the AL MVP in 2013?,Andrew McCutchen,Miguel Cabrera,Mike Trout,Paul Goldschmidt,Miguel Cabrera",
+"Who won the AL MVP in 1932?,Chuck Klein,Jimmie Foxx,Lou Gehrig,Lon Warneke,Jimmie Foxx",
+"Who won the WS in 1957?,White Sox,Braves,Yankees,Cardinals,Braves",
+"Who won the AL MVP in 2003?,Albert Pujols,Alex Rodriguez,Barry Bonds,Carlos Delgado,Alex Rodriguez",
+"Who won the WS in 2001?,DIamondbacks,Braves,Yankees,Mariners,DIamondbacks",
+"Who won the 2020 AL CY Young Award?,Kenta Maeda,Shane Bieber,Trevor Bauer,Yu Darvish,Shane Bieber",
+"Who won the 1977 AL CY Young Award?,Jim Palmer,Sparky Lyle,Steve Carlton,Tommy John,Sparky Lyle",
+"Who won the 2002 NL CY Young Award?,Barry Zito,Curt Schilling,Pedro Martinez,Randy Johnson,Randy Johnson",
+"Who won the AL MVP in 1931?,Chuck Klein,Frankie Frisch,Lefty Grove,Lou Gehrig,Lefty Grove",
+"Who won the NL MVP in 1994?,Frank Thomas,Jeff Bagwell,Ken Griffey Jr.,Matt Williams,Jeff Bagwell",
+"Who won the 2009 NL CY Young Award?,Chris Carpenter,Félix Hernández,Tim Lincecum,Zack Greinke,Tim Lincecum",
+"Who won the NL MVP in 1959?,Eddie Matthews,Ernie Banks,Luis Aparicio,Nellie Fox,Ernie Banks",
+"Who won the WS in 1990?,Red Sox,Reds,Athletics,Pirates,Reds",
+"Who won the NL MVP in 1946?,Dixie Walker,Hal Newhouser,Stan Musial,Ted Williams,Stan Musial",
+"Who won the AL MVP in 1994?,Frank Thomas,Jeff Bagwell,Ken Griffey Jr.,Matt Williams,Frank Thomas",
+"Who won the 1981 NL CY Young Award?,Fernando Valenzuela,Rollie Fingers,Steve McCatty,Tom Seaver,Fernando Valenzuela",
+"Who won the AL MVP in 1954?,Larry Doby,Ted Kluszewski,Yogi Berra,Willie Mays,Yogi Berra",
+"Who won the WS in 2020?,Braves,Astros,Dodgers,Rays,Dodgers",
+"Who won the WS in 1954?,Dodgers,Indians,Giants,Yankees,Yankees",
+"Who won the WS in 1984?,Cubs,Tigers,Royals,Padres,Tigers",
+"Who won the AL MVP in 1983?,Andre Dawson,Cal Ripken Jr.,Dale Murphy,Eddie Murray,Cal Ripken Jr.",
+"Who won the AL MVP in 2006?,Albert Pujols,Derek Jeter,Justin Morneau,Ryan Howard,Justin Morneau",
+"Who won the WS in 1981?,Dodgers,Expos,Yankees,Athletics,Dodgers",
+"Who won the WS in 1919?,Reds,White Sox,Indians,Giants,Reds",
+"Who won the 1969 AL CY Young Award(s)?,Denny McLain and Mike Cuellar,Denny McClain and Tom Seaver,Mike Cuellar and Tom Seaver,Tom Seaver,Denny McLain and Mike Cuellar",
+"Who won the WS in 1935?,Cubs,Tigers,Yankees,Cardinals,Tigers",
+"Who won the 2023 AL CY Young Award?,Blake Snell,Gerrit Cole,Logan Webb,Sonny Gray,Gerrit Cole",
+"Who won the NL MVP in 1989?,Kevin Mitchell,Robin Yount,Ruben Sierra,Will Clark,Kevin Mitchell",
+"Who won the WS in 1974?,Orioles,Dodgers,Athletics,Pirates,Athletics",
+"Who won the AL MVP in 1940?,Bob Feller,Frank McCormick,Hank Greenberg,Johnny Mize,Hank Greenberg",
+"Who won the WS in 1944?,Tigers,Pirates,Browns,Cardinals,Cardinals",
+"Who won the WS in 1978?,Royals,Dodgers,Yankees,Phillies,Yankees",
+"Who won the WS in 1945?,Cubs,Tigers,Cardinals,Nationals,Tigers",
+"Who won the WS in 1966?,Orioles,Dodgers,Twins,Giants,Orioles",
+"Who won the WS in 1913?,Giants,Athletics,Phillies,Nationals,Athletics",
+"Who won the 1977 NL CY Young Award?,Jim Palmer,Sparky Lyle,Steve Carlton,Tommy John,Steve Carlton",
+"Who won the NL MVP in 1954?,Larry Doby,Ted Kluszewski,Yogi Berra,Willie Mays,Willie Mays",
+"Who won the AL MVP in 1984?,Keith Hernandez,Kent Hrbek,Ryne Sandberg,Willie Hernández,Willie Hernández",
+"Who won the NL MVP in 1950?,Billy Goodman,Jim Konstanty,Phil Rizzuto,Stan Musial,Jim Konstanty",
+"Who won the 1984 NL CY Young Award?,Dan Quisenberry,Dwight Gooden,Rick Sutcliffe,Willie Hernández,Rick Sutcliffe",
+"Who won the WS in 1915?,Braves,Red Sox,Tigers,Phillies,Red Sox",
+"Who won the 1985 AL CY Young Award?,Bret Saberhagen,Dwight Gooden,John Tudor,Ron Guidry,Bret Saberhagen",
+"Who won the AL MVP in 2001?,Barry Bonds,Ichiro Suzuki,Jason Giambi,Sammy Sosa,Ichiro Suzuki",
+"Who won the WS in 1992?,Braves,Athletics,Pirates,Blue Jays,Blue Jays",
+"Who won the NL MVP in 1968?,Bill Freehan,Bob Gibson,Denny McLain,Pete Rose,Bob Gibson",
+"Who won the 2005 NL CY Young Award?,Bartolo Colón,Chris Carpenter,Dontrelle Willis,Mariano Rivera,Chris Carpenter",
+"Who won the 1970 AL CY Young Award?,Bob Gibson,Dave McNally,Gaylord Perry,Jim Perry,Jim Perry",
+"Who won the WS in 1946?,Red Sox,Dodgers,Tigers,Cardinals,Cardinals",
+"Who won the 1992 AL CY Young Award?,Dennis Eckersley,Greg Maddux,Jack McDowell,Tom Glavine,Dennis Eckersley",
+"Who won the AL MVP in 2020?,Freddie Freeman,José Abreu,José Ramírez,Mookie Betts,José Abreu",
+"Who won the 2009 AL CY Young Award?,Chris Carpenter,Félix Hernández,Tim Lincecum,Zack Greinke,Zack Greinke",
+"Who won the AL MVP in 1956?,Don Newcombe,Mickey Mantle,Sal Maglie,Yogi Berra,Mickey Mantle",
+"Who won the WS in 1943?,Reds,Yankees,Cardinals,Nationals,Yankees",
+"Who won the 2019 NL CY Young Award?,Gerrit Cole,Hyun Jin Ryu,Jacob deGrom,Justin Verlander,Jacob deGrom",
+"Who won the WS in 1940?,Dodgers,Reds,Indians,Tigers,Reds",
+"Who won the NL MVP in 1948?,Joe DiMaggio,Johnny Sain,Lou Boudreau,Stan Musial,Stan Musial",
+"Who won the 2016 AL CY Young Award?,Jon Lester,Justin Verlander,Max Scherzer,Rick Porcello,Rick Porcello",
+"Who won the 2001 AL CY Young Award?,Curt Schilling,Mark Mulder,Randy Johnson,Roger Clemens,Roger Clemens",
+"Who won the WS in 2021?,Braves,Red Sox,Astros,Dodgers,Braves",
+"Who won the WS in 1996?,Braves,Orioles,Yankees,Cardinals,Yankees",
+"Who won the WS in 1969?,Braves,Orioles,Twins,Mets,Mets",
+"Who won the NL MVP in 1993?,Barry Bonds,Frank Thomas,Lenny Dykstra,Paul Molitor,Barry Bonds",
+"Who won the NL MVP in 2001?,Barry Bonds,Ichiro Suzuki,Jason Giambi,Sammy Sosa,Barry Bonds",
+"Who won the AL MVP in 2011?,Jacoby Ellsbury,Justin Verlander,Matt Kemp,Ryan Braun,Justin Verlander",
+"Who won the AL MVP in 1957?,Henry Aaron,Mickey Mantle,Stan Musial,Ted Williams,Mickey Mantle",
+"Who won the AL MVP in 1962?,Bobby Richardson,Maury Wills,Mickey Mantle,Willie Mays,Mickey Mantle",
+"Who won the AL MVP in 1992?,Barry Bonds,Dennis Eckersley,Kirby Puckett,Terry Pendleton,Dennis Eckersley",
+"Who won the WS in 1963?,White Sox,Dodgers,Yankees,Cardinals,Dodgers",
+"Who won the NL MVP in 1984?,Keith Hernandez,Kent Hrbek,Ryne Sandberg,Willie Hernández,Ryne Sandberg",
+"Who won the NL MVP in 2000?,Barry Bonds,Frank Thomas,Jason Giambi,Jeff Kent,Jeff Kent",
+"Who won the AL MVP in 1974?,Jeff Burroughs,Joe Rudi,Lou Brock,Steve Garvey,Jeff Burroughs",
+"Who won the NL MVP in 1985?,Don Mattingly,Dave Parker,George Brett,Willie McGee,Willie McGee",
+"Who won the NL MVP in 2020?,Freddie Freeman,José Abreu,José Ramírez,Mookie Betts,Freddie Freeman",
+"Who won the 1980 AL CY Young Award?,Jerry Reuss,Mike Norris,Steve Carlton,Steve Stone,Steve Stone",
+"Who won the WS in 2002?,Angels,Twins,Giants,Cardinals,Angels",
+"Who won the NL MVP in 2022?,Aaron Judge,Manny Machado,Paul Goldschmidt,Shohei Ohtani,Paul Goldschmidt",
+"Who won the AL MVP in 1939?,Bucky Walters,Jimmie Foxx,Joe DiMaggio,Johnny Mize,Joe DiMaggio",
+"Who won the WS in 1998?,Braves,Indians,Yankees,Padres,Yankees",
+"Who won the 1976 AL CY Young Award?,Jerry Koosman,Jim Palmer,Mark Fidrych,Randy Jones,Jim Palmer",
+"Who won the AL MVP in 1965?,Sandy Koufax,Tony Oliva,Willie Mays,Zoilo Versalles,Zoilo Versalles",
+"Who won the WS in 1906?,Cubs,White Sox,Highlanders,Giants,Cubs",
+"Who won the 2002 AL CY Young Award?,Barry Zito,Curt Schilling,Pedro Martinez,Randy Johnson,Barry Zito",
+"Who won the AL MVP in 2002?,Alex Rodriguez,Albert Pujols,Barry Bonds,Miguel Tejada,Miguel Tejada",
+"Who won the WS in 1910?,Cubs,Giants,Highlanders,Athletics,Athletics",
+"Who won the NL MVP in 2018?,Christian Yelich,Javier Báez,Mike Trout,Mookie Betts,Christian Yelich",
+"Who won the AL MVP in 1964?,Brooks Robinson,Ken Boyer,Mickey Mantle,Johnny Callison,Brooks Robinson",
+"Who won the WS in 1949?,Red Sox,Dodgers,Yankees,Cardinals,Yankees",
+"Who won the AL MVP in 2007?,Alex Rodriguez,Jimmy Rollins,Magglio Ordonez,Matt Holliday,Alex Rodriguez",
+"Who won the WS in 1959?,Dodgers,White Sox,Indians,Braves,Dodgers",
+"Who won the NL MVP in 2010?,Albert Pujols,Joey Votto,Josh Hamilton,Miguel Cabrera,Joey Votto",
+"Who won the WS in 1973?,Orioles,Reds,Mets,Athletics,Athletics",
+"Who won the WS in 2015?,Cubs,Royals,Mets,Blue Jays,Royals",
+"Who won the 1967 AL CY Young Award?,Jim Bunning,Jim Lonborg,Joe Horlen,Mike McCormick,Jim Lonborg",
+"Who won the 1973 AL CY Young Award?,Jim Palmer,Mike Marshall,Nolan Ryan,Tom Seaver,Jim Palmer",
+"Who won the 2000 NL CY Young Award?,Pedro Martinez,Randy Johnson,Tim Hudson,Tom Glavine,Randy Johnson",
+"Who won the WS in 2023?,DIamondbacks,Astros,Phillies,Rangers,Rangers",
+"Who won the NL MVP in 1947?,Bob Elliott,Ewell Blackwell,Joe DiMaggio,Ted Williams,Bob Elliott",
+"Who won the WS in 1955?,Dodgers,Indians,Yankees,Braves,Dodgers",
+"Who won the 1983 AL CY Young Award?,Dan Quisenberry,John Denny,LaMarr Hoyt,Mario Soto,LaMarr Hoyt",
+"Who won the AL MVP in 1967?,Carl Yastrzemski,Harmon Killebrew,Orlando Cepeda,Tim McCarver,Carl Yastrzemski",
+"Who won the AL MVP in 1947?,Bob Elliott,Ewell Blackwell,Joe DiMaggio,Ted Williams,Joe DiMaggio",
+"Who won the WS in 2016?,Indians,Cubs,Dodgers,Blue Jays,Cubs",
+"Who won the 1984 AL CY Young Award?,Dan Quisenberry,Dwight Gooden,Rick Sutcliffe,Willie Hernández,Willie Hernández",
+"Who won the NL MVP in 1975?,Fred Lynn,Greg Luzinski,Joe Morgan,John Mayberry,Joe Morgan",
+"Who won the WS in 2022?,Astros,Yankees,Phillies,Padres,Astros",
+"Who won the 1979 NL CY Young Award?,Bruce Sutter,Joe Niekro,Mike Flanagan,Tommy John,Bruce Sutter",
+"Who won the NL MVP in 1934?,Charlie Gehringer,Dizzy Dean,Mickey Cochrane,Paul Warner,Dizzy Dean",
+"Who won the NL MVP in 1970?,Billy Williams,Boog Powell,Johnny Bench,Tony Oliva,Johnny Bench",
+"Who won the NL MVP in 2014?,Clayton Kershaw,Giancarlo Stanton,Mike Trout,Victor Martinez,Clayton Kershaw",
+"Who won the WS in 1905?,White Sox,Giants,Athletics,Pirates,Giants",
+"Who won the WS in 1980?,Astros,Royals,Yankees,Phillies,Phillies",
+"Who won the WS in 1993?,Braves,White Sox,Phillies,Blue Jays,Blue Jays",
+"Who won the 2014 NL CY Young Award?,Clayton Kershaw,Corey Kluber,Félix Hernández,Johnny Cueto,Clayton Kershaw",
+"Who won the 2005 AL CY Young Award?,Bartolo Colón,Chris Carpenter,Dontrelle Willis,Mariano Rivera,Bartolo Colón",
+"Who won the 1978 AL CY Young Award?,Burt Hooton,Gaylord Perry,Mike Caldwell,Ron Guidry,Ron Guidry",
+"Who won the 2008 NL CY Young Award?,Brandon Webb,Cliff Lee,Roy Halladay,Tim Lincecum,Tim Lincecum",
+"Who won the 1981 AL CY Young Award?,Fernando Valenzuela,Rollie Fingers,Steve McCatty,Tom Seaver,Rollie Fingers",
+"Who won the WS in 1967?,Red Sox,Tigers,Giants,Cardinals,Cardinals",
+"Who won the NL MVP in 1974?,Jeff Burroughs,Joe Rudi,Lou Brock,Steve Garvey,Steve Garvey",
+"Who won the NL MVP in 2004?,Adrián Beltré,Barry Bonds,Gary Sheffield,Vladimir Guerrero,Barry Bonds",
+"Who won the 1996 NL CY Young Award?,Andy Pettitte,John Smoltz,Kevin Brown,Pat Hentgen,John Smoltz",
+"Who won the NL MVP in 2016?,Daniel Murphy,Kris Bryant,Mike Trout,Mookie Betts,Kris Bryant",
+"Who won the AL MVP in 1935?,Dizzy Dean,Gabby Hartnett,Hank Greenberg,Wes Ferrell,Hank Greenberg",
+"Who won the 1973 NL CY Young Award?,Jim Palmer,Mike Marshall,Nolan Ryan,Tom Seaver,Tom Seaver",
+"Who won the 1980 NL CY Young Award?,Jerry Reuss,Mike Norris,Steve Carlton,Steve Stone,Steve Carlton",
+"Who won the 2010 AL CY Young Award?,Adam Wainwright,David Price,Félix Hernández,Roy Halladay,Félix Hernández",
+"Who won the 1991 NL CY Young Award?,Lee Smith,Scott Erickson,Roger Clemens,Tom Glavine,Tom Glavine",
+"Who won the 1982 NL CY Young Award?,Jim Palmer,Pete Vuckovich,Steve Carlton,Steve Rogers,Steve Carlton",
+"Who won the WS in 1976?,Reds,Royals,Yankees,Phillies,Reds",
+"Who won the AL MVP in 1969?,Boog Powell,Harmon Killebrew,Tom Seaver,Willie McCovey,Harmon Killebrew",
+"Who won the 1971 AL CY Young Award?,Fergie Jenkins,Mickey Lolich,Tom Seaver,Vida Blue,Vida Blue",
+"Who won the AL MVP in 1990?,Barry Bonds,Bobby Bonilla,Cecil Fielder,Rickey Henderson,Rickey Henderson",
+"Who won the WS in 1989?,Cubs,Athletics,Giants,Blue Jays,Athletics",
+"Who won the NL MVP in 1972?,Billy Williams,Dick Allen,Joe Rudi,Johnny Bench,Johnny Bench",
+"Who won the 2007 AL CY Young Award?,Brandon Webb,CC Sabathia,Jake Peavy,Josh Beckett,CC Sabathia",
+"Who won the AL MVP in 1997?,Ken Griffey Jr.,Larry Walker,Mike Piazza,Tino Martinez,Ken Griffey Jr.",
+"Who won the 1967 NL CY Young Award?,Jim Bunning,Jim Lonborg,Joe Horlen,Mike McCormick,Mike McCormick",
+"Who won the NL MVP in 1962?,Bobby Richardson,Maury Wills,Mickey Mantle,Willie Mays,Maury Wills",
+"Who won the NL MVP in 1967?,Carl Yastrzemski,Harmon Killebrew,Orlando Cepeda,Tim McCarver,Orlando Cepeda",
+"Who won the AL MVP in 1959?,Eddie Matthews,Ernie Banks,Luis Aparicio,Nellie Fox,Nellie Fox",
+"Who won the AL MVP in 2004?,Adrián Beltré,Barry Bonds,Gary Sheffield,Vladimir Guerrero,Vladimir Guerrero",
+"Who won the WS in 1997?,Braves,Orioles,Indians,Marlins,Marlins",
+"Who won the WS in 1983?,Orioles,White Sox,Dodgers,Phillies,Orioles",
+"Who won the NL MVP in 1961?,Frank Robinson,Mickey Mantle,Orlando Cepeda,Roger Maris,Frank Robinson",
+"Who won the NL MVP in 2007?,Alex Rodriguez,Jimmy Rollins,Magglio Ordonez,Matt Holliday,Jimmy Rollins",
+"Who won the 2019 AL CY Young Award?,Gerrit Cole,Hyun Jin Ryu,Jacob deGrom,Justin Verlander,Justin Verlander",
+"Who won the NL MVP in 1964?,Brooks Robinson,Ken Boyer,Mickey Mantle,Johnny Callison,Ken Boyer",
+"Who won the NL MVP in 2013?,Andrew McCutchen,Miguel Cabrera,Mike Trout,Paul Goldschmidt,Andrew McCutchen",
+"Who won the WS in 2010?,Yankees,Phillies,Giants,Rangers,Giants",
+"Who won the AL MVP in 2015?,Bryce Harper,Josh Donaldson,Mike Trout,Paul Goldschmidt,Josh Donaldson",
+"Who won the WS in 1948?,Braves,Red Sox,Indians,Cardinals,Indians",
+"Who won the NL MVP in 2006?,Albert Pujols,Derek Jeter,Justin Morneau,Ryan Howard,Ryan Howard",
+"Who won the NL MVP in 1951?,Ned Garver,Roy Campanella,Stan Musial,Yogi Berra,Roy Campanella",
+"Who won the AL MVP in 1943?,Luke Appling,Spud Chandler,Stan Musial,Walker Cooper,Spud Chandler",
+"Who won the WS in 1938?,Cubs,Reds,Yankees,Pirates,Yankees",
+"Who won the 1989 NL CY Young Award?,Bret Saberhagen,Dave Stewart,Mark Davis,Mike Scott,Mark Davis",
+"Who won the NL MVP in 2011?,Jacoby Ellsbury,Justin Verlander,Matt Kemp,Ryan Braun,Ryan Braun",
+"Who won the AL MVP in 1945?,Eddie Mayo,Hal Newhouser,Phil Cavarretta,Tommy Holmes,Hal Newhouser",
+"Who won the 1989 AL CY Young Award?,Bret Saberhagen,Dave Stewart,Mark Davis,Mike Scott,Bret Saberhagen",
+"Who won the NL MVP in 1952?,Allie Reynolds,Bobby Shantz,Hank Sauer,Robin Roberts,Hank Sauer",
+"Who won the AL MVP in 2021?,Bryce Harper,Juan Soto,Shohei Ohtani,Vladimir Guerrero Jr.,Shohei Ohtani",
+"Who won the WS in 2018?,Red Sox,Astros,Dodgers,Brewers,Red Sox",
+"Who won the WS in 2008?,Red Sox,Dodgers,Phillies,Rays,Phillies",
+"Who won the 2022 AL CY Young Award?,Dylan Cease,Justin Verlander,Max Fried,Sandy Alcántara,Justin Verlander",
+"Who won the WS in 1925?,Giants,Athletics,Pirates,Nationals,Pirates",
+"Who won the WS in 1916?,Red Sox,Robins,White Sox,Phillies,Red Sox",
+"Who won the NL MVP in 1971?,Joe Torre,Sal Bando,Vida Blue,Willie Stargell,Joe Torre",
+"Who won the NL MVP in 1937?,Charlie Gehringer,Gabby Hartnett,Joe DiMaggio,Joe Medwick,Joe Medwick",
+"Who won the 2017 NL CY Young Award?,Chris Sale,Clayton Kershaw,Corey Kluber,Max Scherzer,Max Scherzer",
+"Who won the WS in 1927?,Yankees,Athletics,Pirates,Cardinals,Yankees",
+"Who won the NL MVP in 1977?,Al Cowens,George Foster,Greg Luzinski,Rod Carew,George Foster",
+"Who won the NL MVP in 2015?,Bryce Harper,Josh Donaldson,Mike Trout,Paul Goldschmidt,Bryce Harper",
+"Who won the AL MVP in 1952?,Allie Reynolds,Bobby Shantz,Hank Sauer,Robin Roberts,Bobby Shantz",
+"Who won the AL MVP in 1968?,Bill Freehan,Bob Gibson,Denny McLain,Pete Rose,Denny McLain",
+"Who won the 1988 AL CY Young Award?,Danny Jackson,Dennis Eckersley,Frank Viola,Orel Hershiser,Frank Viola",
+"Who won the AL MVP in 2010?,Albert Pujols,Joey Votto,Josh Hamilton,Miguel Cabrera,Josh Hamilton",
+"Who won the 1976 NL CY Young Award?,Jerry Koosman,Jim Palmer,Mark Fidrych,Randy Jones,Randy Jones",
+"Who won the NL MVP in 1945?,Eddie Mayo,Hal Newhouser,Phil Cavarretta,Tommy Holmes,Phil Cavarretta",
+"Who won the 1995 AL CY Young Award?,Greg Maddux,Jose Mesa,Pete Schourek,Randy Johnson,Randy Johnson",
+"Who won the AL MVP in 1953?,Al Rosen,Eddie Matthews,Roy Campanella,Yogi Berra,Al Rosen",
+"Who won the NL MVP in 1999?,Chipper Jones,Ivan Rodriguez,Jeff Bagwell,Pedro Martinez,Chipper Jones",
+"Who won the 1997 AL CY Young Award?,Greg Maddux,Pedro Martinez,Randy Johnson,Roger Clemens,Roger Clemens",
+"Who won the WS in 1930?,Cubs,Athletics,Cardinals,Nationals,Athletics",
+"Who won the WS in 1982?,Braves,Angels,Brewers,Cardinals,Cardinals",
+"Who won the 1974 NL CY Young Award?,Andy Messersmith,Catfish Hunter,Fergie Jenkins,Mike Marshall,Mike Marshall",
+"Who won the WS in 1908?,Cubs,Tigers,Giants,Pirates,Cubs",
+"Who won the 2015 NL CY Young Award?,Dallas Keuchel,David Price,Jake Arrieta,Zack Greinke,Jake Arrieta",
+"Who won the 2023 NL CY Young Award?,Blake Snell,Gerrit Cole,Logan Webb,Sonny Gray,Blake Snell",
+"Who won the AL MVP in 1934?,Charlie Gehringer,Dizzy Dean,Mickey Cochrane,Paul Warner,Mickey Cochrane",
+"Who won the 1986 AL CY Young Award?,Fernando Valenzuela,Mike Scott,Roger Clemens,Teddy Higuera,Roger Clemens",
+"Who won the AL MVP in 1980?,Gary Carter,George Brett,Mike Schmidt,Reggie Jackson,George Brett",
+"Who won the WS in 1917?,Red Sox,White Sox,Giants,Phillies,Cubs",
+"Who won the WS in 1904?,Americans,Highlanders,Giants,No One,No One",
+"Who won the 2013 AL CY Young Award?,Adam Wainwright,Clayton Kershaw,Max Scherzer,Yu Darvish,Max Scherzer",
+"Who won the NL MVP in 2023?,Corey Seager,Mookie Betts,Ronald Acuna Jr.,Shohei Ohtani,Ronald Acuna Jr.",
+"Who won the AL MVP in 2009?,Albert Pujols,Hanley Ramirez,Joe Mauer,Mark Teixeira,Joe Mauer",
+"Who won the AL MVP in 1996?,Alex Rodriguez,Juan González,Ken Caminiti,Mike Piazza,Juan González",
+"Who won the AL MVP in 1960?,Dick Groat,Don Hoak,Mickey Mantle,Roger Maris,Roger Maris",
+"Who won the WS in 2019?,Astros,Yankees,Cardinals,Nationals,Nationals",
+"Who won the NL MVP in 1939?,Bucky Walters,Jimmie Foxx,Joe DiMaggio,Johnny Mize,Bucky Walters",
+"Who won the 1997 NL CY Young Award?,Greg Maddux,Pedro Martinez,Randy Johnson,Roger Clemens,Pedro Martinez",
+"Who won the WS in 1923?,Reds,Tigers,Giants,Yankees,Yankees",
+"Who won the NL MVP in 1942?,Enos Slaughter,Joe Gordon,Mort Cooper,Ted Williams,Mort Cooper",
+"Who won the AL MVP in 2022?,Aaron Judge,Manny Machado,Paul Goldschmidt,Shohei Ohtani,Aaron Judge",
+"Who won the NL MVP in 2002?,Alex Rodriguez,Albert Pujols,Barry Bonds,Miguel Tejada,Barry Bonds",
+"Who won the 2012 NL CY Young Award?,David Price,Clayton Kershaw,Justin Verlander,R.A. Dickey,R.A. Dickey",
+"Who won the 2012 AL CY Young Award?,David Price,Clayton Kershaw,Justin Verlander,R.A. Dickey,David Price",
+"Who won the AL MVP in 1936?,Carl Hubbell,Dizzy Dean,Lou Gehrig,Luke Appling,Lou Gehrig",
+"Who won the AL MVP in 1966?,Brooks Robinson,Frank Robinson,Roberto Clemente,Sandy Koufax,Frank Robinson",
+"Who won the AL MVP in 1998?,Juan González,Mark McGwire,Nomar Garciaparra,Sammy Sosa,Juan González",
+"Who won the AL MVP in 1944?,Bill Nicholson,Dizzy Trout,Hal Newhouser,Marty Marion,Hal Newhouser",
+"Who won the WS in 2014?,Orioles,Royals,Giants,Cardinals,Giants",
+"Who won the NL MVP in 1931?,Chuck Klein,Frankie Frisch,Lefty Grove,Lou Gehrig,Frankie Frisch",
+"Who won the 1971 NL CY Young Award?,Fergie Jenkins,Mickey Lolich,Tom Seaver,Vida Blue,Fergie Jenkins",
+"Who won the WS in 1928?,Giants,Yankees,Athletics,Cardinals,Yankees",
+"Who won the NL MVP in 1944?,Bill Nicholson,Dizzy Trout,Hal Newhouser,Marty Marion,Marty Marion",
+"Who won the WS in 1961?,Reds,Tigers,Dodgers,Yankees,Yankees",
+"Who won the WS in 2005?,White Sox,Astros,Angels,Cardinals,White Sox",
+"Who won the AL MVP in 1988?,Darryl Strawberry,José Canseco,Kirk Gibson,Mike Greenwell,José Canseco"
+            ];
+
+
+    function shuffleQuestions() {
+        for (let i = questions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [questions[i], questions[j]] = [questions[j], questions[i]];
+        }
+    } 
+    
+    function displayCurrentQuestion() {
+        const currentQuestionString = questions[currentQuestionIndex];
+        const parts = currentQuestionString.split(",");
+        const questionText = parts[0];
+        const optionsList = parts.slice(1, -1);
+
+        questionLabel.textContent = questionText;
+        optionsContainer.innerHTML = '';
+
+        optionsList.forEach((option, index) => {
+            const optionElement = document.createElement('button');
+            optionElement.type = 'button';
+            optionElement.classList.add('option');
+            optionElement.textContent = option;
+            optionElement.addEventListener('click', () => handleOptionSelection(option));
+
+            optionsContainer.appendChild(optionElement);
+        });
+
+        remainingTime = 30;
+        timerLabel.textContent = `Time: ${remainingTime}`;
+        submitButtonPressed = false;
+    }
+
+    function handleOptionSelection(option) {
+        // Check if the option is already selected
+        if (selectedOption === option) {
+            // Deselect the option if clicked again
+            selectedOption = null;
+
+            // Enable all options
+            document.querySelectorAll('.option').forEach((element) => {
+                element.disabled = false;
+            });
+        } else {
+            // Select the clicked option
+            selectedOption = option;
+
+            // Disable other options
+            document.querySelectorAll('.option').forEach((element) => {
+                if (element.textContent !== option) {
+                    element.disabled = true;
+                }
+            });
+        }
+    }
+
+    function handleAnswerSubmission() {
+        if (selectedOption && !submitButtonPressed) {
+            submitButtonPressed = true; // Set submitButtonPressed to true
+            checkAnswer(selectedOption);
+            moveToNextQuestion();
+        }
+    }
+
+    function checkAnswer(selectedOptionText) {
+        const parts = questions[currentQuestionIndex].split(",");
+        const correctAnswer = parts[parts.length - 1];
+
+        if (selectedOptionText === correctAnswer) {
+            score += 3;
+            questionsCorrect++;
+        } else {
+            score -= 1; // Adjust for penalty
+            questionsMissed++;
+        }
+    }
+
+    function moveToNextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            displayCurrentQuestion();
+        } else {
+            endGame();
+        }
+        updateStatsLabel();
+    }
+
+    function updateStatsLabel() {
+        statsLabel.textContent = `Score: ${score} Right: ${questionsCorrect} Wrong: ${questionsMissed} Expired: ${questionsTimedOut} Time Spent: ${totalTimePlayed} sec.`;
+    }
+
+    function startTotalTimeTimer() {
+        setInterval(() => {
+            totalTimePlayed++;
+            updateStatsLabel();
+        }, 1000);
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            remainingTime--;
+            if (remainingTime >= 0) {
+                timerLabel.textContent = `Time: ${remainingTime}`;
+            } else {
+                handleTimeout();
+            }
+        }, 1000);
+    }
+
+    function handleTimeout() {
+        questionsTimedOut++;
+        score -= 1; // Adjust for penalty
+        moveToNextQuestion();
+    }
+
+    function endGame() {
+        // Implement the logic to end the game
+        // This may include displaying the final score or other actions
+    }
+
+    // Add event listeners
+    submitButton.addEventListener('click', handleAnswerSubmission);
+
+    // Initialize the game       
+    shuffleQuestions();
+    displayCurrentQuestion();
+    startTimer();
+    startTotalTimeTimer();
+    
+</script>
+</body>
+</html>
